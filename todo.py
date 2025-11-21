@@ -1,5 +1,47 @@
 import datetime # Tells Python you need the datetime library
 import json
+import requests
+
+
+def fetch_remote_tasks() -> list:
+    """Fetches a list of 5 placeholder tasks from a public API."""
+    
+    # The URL of the public API endpoint
+    API_URL = "https://jsonplaceholder.typicode.com/todos?_limit=5" # _limit=5 makes it quick
+
+    try:
+        # 1. Make the HTTP GET Request
+        # The .get() function calls the server and waits for a response
+        response = requests.get(API_URL)
+
+        # 2. Check for a successful response (Status code 200 is success)
+        if response.status_code == 200:
+            # 3. Convert the JSON text from the internet into a Python List/Dictionary
+            remote_data = response.json()
+            
+            # --- IMPORTANT CLEANUP STEP ---
+            # The remote list has keys like 'title', 'completed', etc.
+            # Your local list only has the task text. We clean it up here.
+            
+            # This is a list comprehension to pull just the 'title' key
+            # and format it to match your existing list structure: [['task 1'], ['task 2']]
+            clean_list = [[item.get('title')] for item in remote_data]
+
+            print(f"\n--- Loaded {len(clean_list)} tasks from external API. ---\n")
+            return clean_list
+
+        else:
+            print(f"Failed to fetch tasks. Status code: {response.status_code}. Loading from local file.")
+            # Fallback to your local load function
+            return load_tasks() 
+
+    except requests.exceptions.RequestException as e:
+        # This catches errors like 'no internet connection'
+        print(f"Connection Error: {e}. Loading from local file.")
+        # Fallback to your local load function
+        return load_tasks()
+    
+
 
 # 1. New Save Function
 def save_tasks(task_list: list):
@@ -57,7 +99,7 @@ def print_tasks(task_list): #for print the task
         print(f"{row}") #print the task
  # After the loop finishes, you might want to print a blank line for formatting
     print("-" * 35) # Prints 35 hyphens for a clean separator
-task_list = load_tasks()
+task_list = fetch_remote_tasks()
 
 while True: #looping
     now = datetime.datetime.now()
