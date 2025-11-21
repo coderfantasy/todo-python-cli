@@ -1,7 +1,38 @@
 import datetime # Tells Python you need the datetime library
 import json
 import requests
+import os
+from google import genai
 
+#
+client = genai.Client()
+# The new function replaces the old OpenAI-specific code
+def generate_ai_tasks() -> list:
+    """Uses the Google Gemini API to generate a list of 5 creative tasks."""
+    print("\n--- Requesting creative task list from Gemini AI... ---")
+    
+    try:
+        # 1. The API Call - The 80/20 of Gemini development
+        response = client.models.generate_content(
+            model='gemini-2.5-flash', # Google's fast, capable model
+            contents=[
+                "You are a creative task generator. Your output must ONLY be a comma-separated list of 5 fun and slightly unusual to-do items for a creative person. Do not include numbers or other text."
+            ]
+        )
+
+        # 2. Extract the simple string response
+        ai_response_text = response.text.strip()
+        
+        # 3. Convert the comma-separated string into a Python list
+        raw_list = [task.strip() for task in ai_response_text.split(',') if task.strip()]
+        clean_list = [[task] for task in raw_list]
+
+        print(f"--- Successfully loaded {len(clean_list)} tasks from Gemini AI. ---\n")
+        return clean_list
+
+    except Exception as e:
+        print(f"Error connecting to Gemini: {e}. Falling back to local file.")
+        return load_tasks()
 
 def fetch_remote_tasks() -> list:
     """Fetches a list of 5 placeholder tasks from a public API."""
@@ -99,7 +130,7 @@ def print_tasks(task_list): #for print the task
         print(f"{row}") #print the task
  # After the loop finishes, you might want to print a blank line for formatting
     print("-" * 35) # Prints 35 hyphens for a clean separator
-task_list = fetch_remote_tasks()
+task_list = generate_ai_tasks()
 
 while True: #looping
     now = datetime.datetime.now()
